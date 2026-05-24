@@ -6,6 +6,7 @@
 #include "esp_system.h"
 #include "led_strip.h"
 #include "driver/gpio.h"
+#include "driver/uart.h"
 
 #define CTRL_GPIO   6
 #define LED_GPIO    8
@@ -49,16 +50,13 @@ static void led_set(bool on)
     }
 }
 
-#include <uros_network_interfaces.h>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <std_msgs/msg/int32.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
-
-#ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
-#include <rmw_microros/rmw_microros.h>
-#endif
+#include <rmw_microros/custom_transport.h>
+#include "esp32_serial_transport.h"
 
 #ifndef CONFIG_MICRO_ROS_APP_STACK
 #define CONFIG_MICRO_ROS_APP_STACK 16000
@@ -72,6 +70,7 @@ static void led_set(bool on)
 
 static rcl_subscription_t subscriber;
 static std_msgs__msg__Int32 recv_msg;
+static size_t uart_port = UART_NUM_0;
 
 static void subscription_callback(const void * msgin)
 {
@@ -93,15 +92,7 @@ void micro_ros_task(void * arg)
     rcl_allocator_t allocator = rcl_get_default_allocator();
     rclc_support_t support;
 
-    rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
-    RCCHECK(rcl_init_options_init(&init_options, allocator));
-
-#ifdef CONFIG_MICRO_ROS_ESP_XRCE_DDS_MIDDLEWARE
-    rmw_init_options_t * rmw_options = rcl_init_options_get_rmw_init_options(&init_options);
-    RCCHECK(rmw_uros_options_set_udp_address(CONFIG_MICRO_ROS_AGENT_IP, CONFIG_MICRO_ROS_AGENT_PORT, rmw_options));
-#endif
-
-    RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
+    RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
     rcl_node_t node = rcl_get_zero_initialized_node();
     RCCHECK(rclc_node_init_default(&node, "esp32_minimal_subscriber", "", &support));
@@ -139,8 +130,16 @@ void app_main(void)
 {
     led_init();
 
-#if defined(CONFIG_MICRO_ROS_ESP_NETIF_WLAN) || defined(CONFIG_MICRO_ROS_ESP_NETIF_ENET)
-    ESP_ERROR_CHECK(uros_network_interface_initialize());
+#if defined(CONFIG_MICRO_ROS_ESP_UART_TRANSPORT)
+    rmw_uros_set_custom_transport(
+        true,
+        (void *)&uart_port,
+        esp32_serial_open,
+        esp32_serial_close,
+        esp32_serial_write,
+        esp32_serial_read);
+#else
+#error micro-ROS transports misconfigured
 #endif
 
     xTaskCreate(
