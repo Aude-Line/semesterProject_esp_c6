@@ -12,6 +12,14 @@ Both projects subscribe to the same ROS 2 topic:
 - Type: `std_msgs/msg/Int32`
 - Valid commands: `0` (off), `1` (on)
 
+## LED status (both versions)
+
+The onboard RGB LED indicates communication/output state:
+
+- Red: agent not reachable (startup retry or connection lost)
+- Off: agent connected and output pin is off (`0`)
+- White: agent connected and output pin is on (`1`)
+
 ## Common setup (WSL + Docker)
 
 Install Docker:
@@ -71,10 +79,6 @@ python3 -m pip install --no-cache-dir colcon-common-extensions vcstool catkin_pk
 
 For the Wi-Fi version, the host computer and the ESP must be connected to the same Wi-Fi network. After flashing the correct firmware, the ESP no longer needs a USB data connection to the computer. It only needs USB power (for example from a computer USB port, a power bank, ...)
 
-### Run micro-ROS agent (Wi-Fi/UDP)
-
-Start the agent first. It must already be running when the ESP firmware initializes, otherwise the connection can fail.
-
 Recommended order:
 1. Start the micro-ROS agent.
 2. Connect the ESP to the computer via USB cable.
@@ -85,6 +89,10 @@ If the ESP was alredy flashed, for the wifi version:
 1. Start the micro-ROS agent.
 2. Power on the ESP or press the reboot button if it was already powered on before starting the agent.
 3. Run the control script.
+
+### Run micro-ROS agent (Wi-Fi/UDP)
+
+Start the agent first. It must already be running when the ESP firmware initializes, otherwise the connection can fail.
 
 ```bash
 sudo docker run -it --rm --net=host microros/micro-ros-agent:humble udp4 --port 8888 -v6
@@ -109,9 +117,9 @@ idf.py monitor
 
 In `menuconfig` configure Wi-Fi and agent UDP parameters:
 
-- Component config -> micro-ROS Settings -> micro-ROS transport: WLAN
-- Wi-Fi SSID/password
-- Agent IP and port (default 8888)
+- micro-ROS Settings -> micro-ROS network interface: WLAN
+- micro-ROS Settings -> Wi-Fi connfiguration -> Wi-Fi SSID/password
+- micro-ROS Settings -> Agent IP and port (default 8888)
 
 Get the agent host IP (WSL terminal):
 
@@ -148,7 +156,7 @@ If the ESP was alredy flashed, for the usb version:
 Use the actual port shown by `ls /dev/ttyUSB* /dev/ttyACM*`:
 
 ```bash
-sudo docker run -it --rm --net=host --device=/dev/ttyACM0 microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200 -v6
+sudo docker run -it --rm --net=host --device=/dev/ttyUSB0 microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200 -v6
 ```
 
 If your device is on an other port, replace accordingly.
@@ -183,6 +191,7 @@ Important:
 - Do not run `idf.py monitor` on the same serial port while running the serial micro-ROS agent, because XRCE binary traffic and logs will mix.
 
 ## Run the control script (both versions)
+To test if the setup is correct, run the test control script.
 
 In a ROS 2 shell:
 
