@@ -36,10 +36,12 @@ ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
 ```
 
 If nothing appears, bind and attach the ESP USB device from **Windows PowerShell (Run as Administrator)**:
-
+Find the ESP busid (example: 1-5):
 ```powershell
 usbipd list
-# Find the ESP busid (example: 1-5)
+```
+Then use the right bus as BUSID:
+```powershell
 usbipd bind --busid <BUSID>
 usbipd attach --wsl --busid <BUSID>
 ```
@@ -48,31 +50,23 @@ Notes:
 - `bind` is persistent, so you usually do it once per device.
 - `attach` is needed each time the device is re-plugged or after reboot.
 
-Start ESP-IDF Docker image:
+Create ESP-IDF Docker image:
 
 ```bash
 sudo docker pull espressif/idf:release-v5.2
-sudo docker run --rm -it --privileged -v "$HOME/semesterProject_LMTS/esp:/work" -w /work espressif/idf:release-v5.2
-```
-
-Notes:
-- `--rm` means the container is removed automatically when you exit.
-- If you want to keep it, create it once without `--rm`:
-
-```bash
 sudo docker run -it --privileged --name esp_idf -v "$HOME/semesterProject_LMTS/esp:/work" -w /work espressif/idf:release-v5.2
-```
-
-Then restart it later with:
-
-```bash
-sudo docker start -ai esp_idf
 ```
 
 Install micro-ROS Python tooling inside container (recommended once):
 
 ```bash
 python3 -m pip install --no-cache-dir colcon-common-extensions vcstool catkin_pkg "empy==3.3.4" "lark-parser==0.12.0"
+```
+
+Then the next time you'll need it, restart it with:
+
+```bash
+sudo docker start -ai esp_idf
 ```
 
 ## Wi-Fi version (`gripper_ctrl`)
@@ -85,9 +79,9 @@ Recommended order:
 3. Build and flash the ESP.
 4. Run the control script.
 
-If the ESP was alredy flashed, for the wifi version:
+If the ESP was already flashed, for the Wi-Fi version:
 1. Start the micro-ROS agent.
-2. Power on the ESP or press the reboot button if it was already powered on before starting the agent.
+2. Power on the ESP, or press the reset button if it was already powered on before starting the agent.
 3. Run the control script.
 
 ### Run micro-ROS agent (Wi-Fi/UDP)
@@ -118,7 +112,7 @@ idf.py monitor
 In `menuconfig` configure Wi-Fi and agent UDP parameters:
 
 - micro-ROS Settings -> micro-ROS network interface: WLAN
-- micro-ROS Settings -> Wi-Fi connfiguration -> Wi-Fi SSID/password
+- micro-ROS Settings -> Wi-Fi configuration -> Wi-Fi SSID/password
 - micro-ROS Settings -> Agent IP and port (default 8888)
 
 Get the agent host IP (WSL terminal):
@@ -133,22 +127,22 @@ Tip:
 - If your WSL IP changes after reboot/network reconnect, run `hostname -I` again and update `Agent IP` before rebuilding/flashing.
 
 ## USB version (`gripper_ctrl_usb`)
-First build and flash the esp as the agent monopolize the UART port.
-Then start the agent. As it must already be running when the ESP firmware initializes, press the reset pin on the esp.
+First, build and flash the ESP, as the agent monopolizes the UART port.
+Then start the agent. Since it must already be running when the ESP firmware initializes, press the reset button on the ESP.
 
-For this version you want to detach the USB cable the least time as possible as every time the cable is disconnected, the port needs to be attached again in powershell administator (see section up).
+For this version, you want to disconnect the USB cable as little as possible, as every time the cable is disconnected the port needs to be re-attached from PowerShell as Administrator (see section above).
 
 Recommended order:
 1. Connect the ESP to the computer via USB cable.
 2. Build and flash the ESP.
 3. Start the micro-ROS agent.
-4. Press the reboot pin on the ESP.
+4. Press the reset button on the ESP.
 5. Run the control script.
 
-If the ESP was alredy flashed, for the usb version:
+If the ESP was already flashed, for the USB version:
 1. Connect the ESP to the computer via USB cable.
 2. Start the micro-ROS agent.
-3. Press the reboot pin on the ESP.
+3. Press the reset button on the ESP.
 4. Run the control script.
 
 ### Run micro-ROS agent (USB serial)
@@ -159,7 +153,7 @@ Use the actual port shown by `ls /dev/ttyUSB* /dev/ttyACM*`:
 sudo docker run -it --rm --net=host --device=/dev/ttyUSB0 microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200 -v6
 ```
 
-If your device is on an other port, replace accordingly.
+If your device is on another port, replace accordingly.
 
 ### Build and flash
 
@@ -201,4 +195,4 @@ source ~/ros2_humble/install/setup.bash
 python3 gripper_ctrl.py
 ```
 
-The script accepts only `0` or `1` and prints `wrong caracter` for any other input.
+The script accepts only `0` or `1` and prints `wrong character` for any other input.
