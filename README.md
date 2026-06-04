@@ -93,8 +93,12 @@ sudo docker run -it --rm --net=host microros/micro-ros-agent:humble udp4 --port 
 ```
 
 ### Build and flash
+In a new WSL terminal, open the `esp_idf` container:
+```bash
+sudo docker start -ai esp_idf
+```
 
-Inside container:
+Inside the container:
 
 ```bash
 rm -rf /work/gripper_ctrl/build
@@ -104,16 +108,20 @@ rm -rf /work/micro_ros_espidf_component/micro_ros_dev
 cd /work/gripper_ctrl
 idf.py set-target esp32c6
 idf.py menuconfig
-idf.py build
-idf.py flash
-idf.py monitor
 ```
 
-In `menuconfig` configure Wi-Fi and agent UDP parameters:
+This will open `menuconfig`. Configure the Wi-Fi and agent UDP parameters:
 
 - micro-ROS Settings -> micro-ROS network interface: WLAN
 - micro-ROS Settings -> Wi-Fi configuration -> Wi-Fi SSID/password
 - micro-ROS Settings -> Agent IP and port (default 8888)
+
+Once the configuration is done, in the same terminal:
+```bash
+idf.py build
+idf.py flash
+idf.py monitor
+```
 
 Get the agent host IP (WSL terminal):
 
@@ -156,8 +164,12 @@ sudo docker run -it --rm --net=host --device=/dev/ttyUSB0 microros/micro-ros-age
 If your device is on another port, replace accordingly.
 
 ### Build and flash
+In a new WSL terminal, open the `esp_idf` container:
+```bash
+sudo docker start -ai esp_idf
+```
 
-Inside container:
+Inside the container:
 
 ```bash
 rm -rf /work/gripper_ctrl_usb/build
@@ -167,11 +179,9 @@ rm -rf /work/micro_ros_espidf_component/micro_ros_dev
 cd /work/gripper_ctrl_usb
 idf.py set-target esp32c6
 idf.py menuconfig
-idf.py build
-idf.py flash
 ```
 
-In `menuconfig` set UART transport:
+This will open `menuconfig`. Set the UART transport parameters:
 
 - micro-ROS Settings -> micro-ROS middleware: micro-ROS over eProsima Micro XRCE-DDS
 - micro-ROS Settings -> Micro XRCE-DDS over UART
@@ -180,6 +190,12 @@ In `menuconfig` set UART transport:
 	- RX pin: `17`
 	- RTS pin: `-1`
 	- CTS pin: `-1`
+
+Once the configuration is done, in the same terminal:
+```bash
+idf.py build
+idf.py flash
+```
 
 Important:
 - Do not run `idf.py monitor` on the same serial port while running the serial micro-ROS agent, because XRCE binary traffic and logs will mix.
